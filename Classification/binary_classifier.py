@@ -6,6 +6,17 @@ import scipy.io as sio
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+from sklearn.linear_model import SGDClassifier
+from sklearn.cross_validation import cross_val_score
+from sklearn.cross_validation import cross_val_predict
+import sklearn.metrics as skm
+
+def plot_precision_recall_vs_threshold(precisions, recalls, thresholds):
+    plt.plot(thresholds, precisions[:-1], "b--", label = "Precision")
+    plt.plot(thresholds, recalls[:-1], "g-", label = "Recall")
+    plt.xlabel("Threshold")
+    plt.legend(loc = "upper left")
+    plt.ylim([0, 1])
 
 
 #mnist = fetch_mldata('MINST original')
@@ -38,3 +49,68 @@ X_train, X_test, y_train, y_test = X[:b_ind], X[b_ind:], y[:b_ind], y[b_ind:]
 # Shuffle dataset
 shuffle_ind = np.random.permutation(b_ind)
 X_train, y_train = X_train[shuffle_ind], y_train[shuffle_ind]
+
+##***********************************************************
+## Training a simple binary classifier
+##***********************************************************
+# Start by training classifier that identifies digit 5 or not
+
+# Create target vectors of True/False
+y_train_5 = (y_train == 5)
+y_test_5 = (y_test == 5)
+
+# Pick a classifier and train it
+# Stochastic Gradient Descent (SGD)
+# Give a seed for reproducible result
+sgd_clf = SGDClassifier(random_state = 42)
+sgd_clf.fit(X_train, y_train_5)
+
+# predict images of number 5
+print(sgd_clf.predict(X_train[1:20]))
+print(y_train[1:20])
+
+## Performance
+## Measuring Accuracy using CV
+# 3-fold and score using accuracy
+result = cross_val_score(sgd_clf, X_train, y_train_5, cv = 3, scoring = "accuracy")
+print(result)
+
+## Measuring performance using confusion matrix
+y_train_pred = cross_val_predict(sgd_clf, X_train, y_train_5, cv = 3)
+
+# each row is an actual class and each column is a predicted class
+print("The confusion matrix is")
+print(skm.confusion_matrix(y_train_5, y_train_pred))
+
+print("The precision score is")
+print(skm.precision_score(y_train_5, y_train_pred))
+
+print("The recall score is")
+print(skm.recall_score(y_train_5, y_train_pred))
+
+print("The F1-score is")
+print(skm.f1_score(y_train_5, y_train_pred))
+
+# cannot set threshold for decisions, but can see the score for each instance
+y_scores = sgd_clf.decision_function([some_digit])
+print(y_scores)
+threshold = 0
+y_some_digit_pred = (y_scores > threshold)
+print(y_some_digit_pred)
+
+# can return scores instead of predictions
+y_scores = sgd_clf.decision_function(X_train)
+#cross_val_predict(sgd_clf, X_train, y_train_5, cv = 3)
+print("Printing y_scores")
+print(y_scores)
+
+precisions, recalls, thresholds = skm.precision_recall_curve(y_train_5, y_scores)
+plot_precision_recall_vs_threshold(precisions, recalls, thresholds)
+plt.show()
+
+y_train_pred_90 = (y_scores > 70000)
+
+print(precision_score(y_train_5, y_train_pred_90))
+print(recall_score(y_train_5, y_train_pred_90))
+
+
