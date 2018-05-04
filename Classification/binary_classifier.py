@@ -10,6 +10,7 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.cross_validation import cross_val_score
 from sklearn.cross_validation import cross_val_predict
 import sklearn.metrics as skm
+from sklearn.ensemble import RandomForestClassifier
 
 def plot_precision_recall_vs_threshold(precisions, recalls, thresholds):
     plt.plot(thresholds, precisions[:-1], "b--", label = "Precision")
@@ -18,6 +19,15 @@ def plot_precision_recall_vs_threshold(precisions, recalls, thresholds):
     plt.legend(loc = "upper left")
     plt.ylim([0, 1])
 
+
+def plot_roc_curve(fpr, tpr, label = None):
+    plt.plot(fpr, tpr, lw = 2, label = label)
+    plt.plot([0, 1], [0, 1], 'k--')
+    plt.axis([0, 1, 0, 1])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+
+    
 
 #mnist = fetch_mldata('MINST original')
 mnist = sio.loadmat('/home/ivy/scikit_learn_data/mldata/mnist-original', squeeze_me = True)
@@ -110,7 +120,25 @@ plt.show()
 
 y_train_pred_90 = (y_scores > 70000)
 
-print(precision_score(y_train_5, y_train_pred_90))
-print(recall_score(y_train_5, y_train_pred_90))
+print(skm.precision_score(y_train_5, y_train_pred_90))
+print(skm.recall_score(y_train_5, y_train_pred_90))
 
+
+##***********************************************************
+## ROC Curve
+##***********************************************************
+fpr, tpr, thresholds = skm.roc_curve(y_train_5, y_scores)
+
+plot_roc_curve(fpr, tpr)
+plt.show()
+
+print('AUC is')
+print(skm.roc_auc_score(y_train_5, y_scores))
+
+
+##***********************************************************
+## Training a Random Forest Classifier
+##***********************************************************
+
+forest_clf = RandomForestClassifier(random_state = 42)
 
