@@ -7,8 +7,8 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from sklearn.linear_model import SGDClassifier
-from sklearn.cross_validation import cross_val_score
-from sklearn.cross_validation import cross_val_predict
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_predict
 import sklearn.metrics as skm
 from sklearn.ensemble import RandomForestClassifier
 
@@ -92,13 +92,13 @@ y_train_pred = cross_val_predict(sgd_clf, X_train, y_train_5, cv = 3)
 print("The confusion matrix is")
 print(skm.confusion_matrix(y_train_5, y_train_pred))
 
-print("The precision score is")
+print("The precision score is") # 0.50988
 print(skm.precision_score(y_train_5, y_train_pred))
 
-print("The recall score is")
+print("The recall score is") # 0.84246
 print(skm.recall_score(y_train_5, y_train_pred))
 
-print("The F1-score is")
+print("The F1-score is") # 0.63528
 print(skm.f1_score(y_train_5, y_train_pred))
 
 # cannot set threshold for decisions, but can see the score for each instance
@@ -133,12 +133,46 @@ plot_roc_curve(fpr, tpr)
 plt.show()
 
 print('AUC is')
+# 0.96879
 print(skm.roc_auc_score(y_train_5, y_scores))
 
 
 ##***********************************************************
 ## Training a Random Forest Classifier
 ##***********************************************************
+print()
+print("Training Random Forest Classifier")
 
 forest_clf = RandomForestClassifier(random_state = 42)
+y_probas_forest = cross_val_predict(forest_clf, X_train, y_train_5, cv = 3, method = "predict_proba")
+y_scores_forest = y_probas_forest[:, 1]
+fpr_forest, tpr_forest, thresholds_forest = skm.roc_curve(y_train_5, y_scores_forest)
+
+
+plt.plot(fpr, tpr, "b:", label = "SGD")
+plot_roc_curve(fpr_forest, tpr_forest, "Random Forest")
+plt.legend(loc = "lower right")
+plt.show()
+
+# AUC is 0.99813
+print("AUC is")
+print(skm.roc_auc_score(y_train_5, y_scores_forest))
+
+
+y_scores_forest = cross_val_predict(forest_clf, X_train, y_train_5, cv = 3, method = "predict")
+
+
+print("The precision score is") # 0.98507
+print(skm.precision_score(y_train_5, y_scores_forest))
+
+print("The recall score is") # 0.81535
+print(skm.recall_score(y_train_5, y_scores_forest))
+
+print("The F1-score is") # 0.89221
+print(skm.f1_score(y_train_5, y_scores_forest))
+
+
+##***********************************************************
+## Multiclass Classification
+##***********************************************************
 
