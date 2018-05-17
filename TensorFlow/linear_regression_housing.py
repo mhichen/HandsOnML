@@ -20,8 +20,6 @@ if __name__ == "__main__":
 
     housing_data_plus_bias = np.c_[np.ones((m,1)), housing.data]
 
-    m, n = housing.data.shape
-
     X = tf.constant(housing_data_plus_bias, dtype = tf.float32, name = "X")
     Y = tf.constant(housing.target.reshape(-1, 1), dtype = tf.float32, name = "Y")
 
