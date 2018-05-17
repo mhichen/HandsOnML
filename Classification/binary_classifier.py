@@ -7,10 +7,11 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from sklearn.linear_model import SGDClassifier
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import cross_val_score, cross_val_predict
 import sklearn.metrics as skm
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
 
 def plot_precision_recall_vs_threshold(precisions, recalls, thresholds):
     plt.plot(thresholds, precisions[:-1], "b--", label = "Precision")
@@ -27,7 +28,6 @@ def plot_roc_curve(fpr, tpr, label = None):
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
 
-    
 
 #mnist = fetch_mldata('MINST original')
 mnist = sio.loadmat('/home/ivy/scikit_learn_data/mldata/mnist-original', squeeze_me = True)
@@ -50,7 +50,7 @@ some_digit_image = some_digit.reshape(28, 28)
 print("Showing image of digit", y[i_ind])
 plt.imshow(some_digit_image, cmap = matplotlib.cm.binary, interpolation = "nearest")
 plt.axis("off")
-plt.show()
+#plt.show()
 
 # Separate out train vs test
 b_ind = 60000
@@ -116,7 +116,7 @@ print(y_scores)
 
 precisions, recalls, thresholds = skm.precision_recall_curve(y_train_5, y_scores)
 plot_precision_recall_vs_threshold(precisions, recalls, thresholds)
-plt.show()
+#plt.show()
 
 y_train_pred_90 = (y_scores > 70000)
 
@@ -130,7 +130,7 @@ print(skm.recall_score(y_train_5, y_train_pred_90))
 fpr, tpr, thresholds = skm.roc_curve(y_train_5, y_scores)
 
 plot_roc_curve(fpr, tpr)
-plt.show()
+#plt.show()
 
 print('AUC is')
 # 0.96879
@@ -152,7 +152,7 @@ fpr_forest, tpr_forest, thresholds_forest = skm.roc_curve(y_train_5, y_scores_fo
 plt.plot(fpr, tpr, "b:", label = "SGD")
 plot_roc_curve(fpr_forest, tpr_forest, "Random Forest")
 plt.legend(loc = "lower right")
-plt.show()
+#plt.show()
 
 # AUC is 0.99813
 print("AUC is")
@@ -170,9 +170,90 @@ print(skm.recall_score(y_train_5, y_scores_forest))
 
 print("The F1-score is") # 0.89221
 print(skm.f1_score(y_train_5, y_scores_forest))
-
+print()
 
 ##***********************************************************
 ## Multiclass Classification
 ##***********************************************************
+print("Multiclass Classification")
 
+## Try SGD Classifier
+print("Training an SGD Classifier")
+sgd_clf.fit(X_train, y_train)
+print(sgd_clf.predict([some_digit]))
+
+some_digit_scores = sgd_clf.decision_function([some_digit])
+print(some_digit_scores)
+print(np.argmax(some_digit_scores))
+print(sgd_clf.classes_)
+print(sgd_clf.classes_[5])
+
+
+## Now try Random Forest Classifier
+forest_clf.fit(X_train, y_train)
+print(forest_clf.predict([some_digit]))
+# print probabilities of each class for this instance
+print(forest_clf.predict_proba([some_digit]))
+
+# cross validate
+print(cross_val_score(sgd_clf, X_train, y_train, cv = 3, scoring = "accuracy"))
+
+# improve by scaling inputs
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train.astype(np.float64))
+print("After scaling")
+print(cross_val_score(sgd_clf, X_train_scaled, y_train, cv = 3, scoring = "accuracy"))
+print()
+print()
+
+## Error Analysis
+y_train_pred = cross_val_predict(sgd_clf, X_train_scaled, y_train, cv = 3)
+conf_mx = skm.confusion_matrix(y_train, y_train_pred)
+print(conf_mx)
+plt.matshow(conf_mx, cmap = plt.cm.gray)
+plt.show()
+
+row_sums = conf_mx.sum(axis = 1, keepdims = True)
+norm_conf_mx = conf_mx / row_sums
+
+np.fill_diagonal(norm_conf_mx, 0)
+plt.matshow(norm_conf_mx, cmap = plt.cm.gray)
+plt.show()
+
+
+
+##***********************************************************
+## Multilabel Classification
+##***********************************************************
+y_train_large = (y_train >= 7)
+y_train_odd = (y_train % 2 == 1)
+y_multilabel = np.c_[y_train_large, y_train_odd]
+
+knn_clf = KNeighborsClassifier()
+knn_clf.fit(X_train, y_multilabel)
+
+print(knn_clf.predict([some_digit]))
+
+y_train_knn_pred = cross_val_predict(knn_clf, X_train, y_multilabel, cv = 3)
+print(skm.f1_score(y_multilabel, y_train_knn_pred, average = "macro"))
+
+
+##***********************************************************
+## Multioutput Classification
+##***********************************************************
+
+# Add noise
+noise = np.random.randint(0, 100, (len(X_train), 784))
+X_train_mod = X_train + noise
+noise = np.random.randint(0, 100, (len(X_test), 784))
+X_test_mod = X_test + noise
+y_train_mod = X_train
+y_test_mod = X_test
+
+knn_clf.fit(X_train_mod, y_train_mod)
+clean_digit = knn_clf.predict([X_test_mod[some_index]])
+
+some_digit_image = clean_digit.reshape(28, 28)
+plt.imshow(some_digit_image, cmap = matplotlib.cm.binary, interpolation = "nearest")
+plt.axis("off")
+#plt.show()
