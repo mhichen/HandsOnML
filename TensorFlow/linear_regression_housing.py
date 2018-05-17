@@ -22,8 +22,6 @@ if __name__ == "__main__":
 
     m, n = housing.data.shape
 
-    housing_data_plus_bias = np.c_[np.ones((m, 1)), housing.data]
-
     X = tf.constant(housing_data_plus_bias, dtype = tf.float32, name = "X")
     Y = tf.constant(housing.target.reshape(-1, 1), dtype = tf.float32, name = "Y")
 
@@ -35,5 +33,7 @@ if __name__ == "__main__":
     with tf.Session() as sess:
 
         theta_value = theta.eval()
+
+        print("theta value is ", theta_value)
 
         
