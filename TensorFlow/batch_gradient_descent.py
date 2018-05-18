@@ -42,13 +42,15 @@ if __name__ == "__main__":
 
     mse = tf.reduce_mean(tf.square(error), name = "mse")
 
-    #gradients = 2/m * tf.matmul(tf.transpose(X), error)
+    # gradients = 2/m * tf.matmul(tf.transpose(X), error)
 
     # Use autodiff instead
-    gradients = tf.gradients(mse, [beta])[0]
+    # gradients = tf.gradients(mse, [beta])[0]
+    # training_op = tf.assign(beta, beta - learning_rate * gradients)
 
-    training_op = tf.assign(beta, beta - learning_rate * gradients)
-
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate = learning_rate)
+    training_op = optimizer.minimize(mse)
+    
     init = tf.global_variables_initializer()
 
     with tf.Session() as sess:
