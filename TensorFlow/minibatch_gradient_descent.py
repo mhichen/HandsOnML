@@ -55,9 +55,11 @@ if __name__ == "__main__":
 
     optimizer = tf.train.GradientDescentOptimizer(learning_rate = learning_rate)
     training_op = optimizer.minimize(mse)
-
+    
     init = tf.global_variables_initializer()
 
+    saver = tf.train.Saver()
+    
     # For training
     n_epochs = 10
 
@@ -67,6 +69,8 @@ if __name__ == "__main__":
 
     with tf.Session() as sess:
 
+        saver.restore(sess, "/home/ivy/Documents/HandsOnML/TensorFlow/my_model_final.ckpt")
+        
         sess.run(init)
 
         for epoch in range(n_epochs):
@@ -78,8 +82,12 @@ if __name__ == "__main__":
                 
                 sess.run(training_op, feed_dict = {X: X_batch, Y: Y_batch})
 
-                
+
+            # Save after 1 epoch
+            save_path = saver.save(sess, "/home/ivy/Documents/HandsOnML/TensorFlow/my_model.ckpt")
+            
         best_beta = beta.eval()
+        save_path = saver.save(sess, "/home/ivy/Documents/HandsOnML/TensorFlow/my_model_final.ckpt")
         
         print("best beta is ", best_beta)
 
