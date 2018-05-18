@@ -42,7 +42,10 @@ if __name__ == "__main__":
 
     mse = tf.reduce_mean(tf.square(error), name = "mse")
 
-    gradients = 2/m * tf.matmul(tf.transpose(X), error)
+    #gradients = 2/m * tf.matmul(tf.transpose(X), error)
+
+    # Use autodiff instead
+    gradients = tf.gradients(mse, [beta])[0]
 
     training_op = tf.assign(beta, beta - learning_rate * gradients)
 
